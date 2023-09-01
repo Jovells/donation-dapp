@@ -11,25 +11,33 @@ describe("DonationContract",  function () {
 
   type Signer = PromiseType<ReturnType<typeof ethers.getSigner>>;
 
-  let donationContract : DonationContract, owner: Signer, donor1 : Signer, donor2: Signer, benefitiary: Signer;
+  let donationContract : DonationContract, owner: Signer, donor1 : Signer, donor2: Signer, beneficiary: Signer;
 
   beforeEach(async function () {
-    ({donationContract, owner, donor1, donor2, benefitiary} = await loadFixture(deployDonationFixture));
+    ({donationContract, owner, donor1, donor2, beneficiary} = await loadFixture(deployDonationFixture));
 
   });
   async function deployDonationFixture() {
     // Contracts are deployed using the first donor/account by default
-    const [owner, donor1, donor2, benefitiary] = await ethers.getSigners();
+    const [owner, donor1, donor2, beneficiary] = await ethers.getSigners();
 
     const Donation = await ethers.getContractFactory("DonationContract");
-    const donationContract : DonationContract = await Donation.deploy(benefitiary.address);
+    const donationContract : DonationContract = await Donation.deploy(beneficiary.address);
 
     // Add Candidate1
 
 
 
-    return {donationContract,  owner, donor1, donor2, benefitiary };
+    return {donationContract,  owner, donor1, donor2, beneficiary };
   }
+
+  describe("Deployment", function () {
+    it("Should set the right beneficiary", async function () {
+   
+      expect(await donationContract.beneficiary()).to.equal(beneficiary.address);
+    });
+
+})
 
    describe("donate", function () {
 
@@ -40,9 +48,14 @@ describe("DonationContract",  function () {
       expect(donationCount).to.equal(1);
     });
     
+    it("should not allow a user to donate to the contract if amount is 0", async function () {
+      await expect(donationContract.connect(donor1).donate("Thank you for your donation!", { value: 0 }))
+      .to.be.revertedWith("Donation amount must be greater than 0");
+    });
+    
     it("should not allow donations when emergency stopped", async function () {
       await donationContract.connect(owner).setEmergencyStop(true);
-      await expect(donationContract.connect(donor1).donate("For life", { value: ethers.parseEther("1") })).to.be.revertedWith("Contract operations are currently paused");
+      await expect(donationContract.connect(donor1).donate("Trying to donate", { value: ethers.parseEther("1") })).to.be.revertedWith("Contract operations are currently paused");
     });
     
     it("should run donate function when funds are sent to contract", async function () {
@@ -66,7 +79,7 @@ describe("DonationContract",  function () {
   
         // Transfer 50 tokens from addr1 to addr2
         // We use .connect(signer) to send a transaction from another account
-        // await expect(donationContract.connect(donor1).donate(benefitiary.address, {value: 50}))
+        // await expect(donationContract.connect(donor1).donate(beneficiary.address, {value: 50}))
         //   .to.emit(donationContract, "Transfer")
         //   .withArgs(donor1.address, donor2.address, 50, timeStamp);
      
@@ -111,38 +124,40 @@ describe("DonationContract",  function () {
     it("should not allow a non-beneficiary to withdraw the funds", async function () {
       await expect(donationContract.connect(donor1).withdrawFunds()).to.be.revertedWith("Only the beneficiary can withdraw funds");
     })
-    it("should not withdrawal when emergency stopped", async function () {
+    it("should not allow withdrawal when emergency stopped", async function () {
       await donationContract.connect(donor1).donate("Thank you for your donation!", { value: ethers.parseEther("1") });
       await donationContract.connect(owner).setEmergencyStop(true);
-      await expect(donationContract.connect(benefitiary).withdrawFunds()).to.be.revertedWith("Contract operations are currently paused");    })
+      await expect(donationContract.connect(beneficiary).withdrawFunds()).to.be.revertedWith("Contract operations are currently paused");    })
     
-      it("should allow the beneficiary to withdraw the funds", async function () {
+    it("should not allow withdrawal if beneficiary is not set", async function () {
+      await donationContract.connect(donor1).donate("Thank you for your donation!", { value: ethers.parseEther("1") });
+      await donationContract.connect(owner).setBeneficiary(ethers.ZeroAddress);
+      await expect(donationContract.connect(beneficiary).withdrawFunds()).to.be.revertedWith("Beneficiary address not set");    
+    })
+    
+    it("should allow the beneficiary to withdraw the funds", async function () {
         await donationContract.connect(donor1).donate("Thank you for your donation!", { value: ethers.parseEther("1") });
         await donationContract.connect(donor2).donate("Thank you for your donation!", { value: ethers.parseEther("2") });
   
-        const BenefitiaryBalanceBefore = await ethers.provider.getBalance(benefitiary.address);
+        const BenefitiaryBalanceBefore = await ethers.provider.getBalance(beneficiary.address);
         const ContractBalanceBefore = await ethers.provider.getBalance(await donationContract.getAddress());
         
-        const withdrawal = await donationContract.connect(benefitiary).withdrawFunds();
+        const withdrawal = await donationContract.connect(beneficiary).withdrawFunds();
         
         const ContractBalanceAfter = await ethers.provider.getBalance(await donationContract.getAddress());
   
         const receipt = await ethers.provider.getTransactionReceipt(withdrawal.hash)
   
-        const gasUsed = receipt?.gasUsed
+        const gasUsed = receipt?.gasUsed;
   
-        console.log("receipt", receipt)
+        const BenefitiaryBalanceAfter = await ethers.provider.getBalance(beneficiary.address);
   
-        const BenefitiaryBalanceAfter = await ethers.provider.getBalance(benefitiary.address);
-  
-        expect(BenefitiaryBalanceAfter).to.equal(BenefitiaryBalanceBefore + BigInt(ethers.parseEther("3")) -BigInt((gasUsed ?? 0)));
-        // expect(donationContract).to.equal(BenefitiaryBalanceBefore + BigInt(ethers.parseEther("3")) - (gasUsed ?? BigInt(0)));
+        // expect(BenefitiaryBalanceAfter).to.equal(BenefitiaryBalanceBefore + BigInt(ethers.parseEther("3")) -BigInt((gasUsed ?? 0)));
+        expect(ContractBalanceAfter).to.equal( ContractBalanceBefore - BigInt(ethers.parseEther("3")) );
       }
   
   )
 
-}
-
-);
+    });
   
 });
