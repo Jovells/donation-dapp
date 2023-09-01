@@ -19,8 +19,8 @@ contract DonationContract {
 
 
     event DonationReceived(uint256 indexed donationId, address indexed donor, uint256 amount, string message, uint256 timestamp);
-    event BeneficiaryChanged(address indexed newBeneficiary);
-    event EmergencyStopSet(bool indexed emergencyStop);
+    // event BeneficiaryChanged(address indexed newBeneficiary);
+    // event EmergencyStopSet(bool indexed emergencyStop);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only the contract owner can call this function");
@@ -54,10 +54,6 @@ contract DonationContract {
         emit DonationReceived(currentDonationId, msg.sender, msg.value, _message, block.timestamp);
     }
 
-    function viewTotalDonations() external view returns (uint256) {
-        return totalDonations;
-    }
-
     // function viewDonorList() external view returns (address[] memory) {
     //     address[] memory donorList = new address[](donationCounter);
     //     uint256 index = 0;
@@ -71,12 +67,12 @@ contract DonationContract {
 
     function setBeneficiary(address _newBeneficiary) external onlyOwner {
         beneficiary = _newBeneficiary;
-        emit BeneficiaryChanged(_newBeneficiary);
+        // emit BeneficiaryChanged(_newBeneficiary);
     }
 
     function setEmergencyStop(bool _emergencyStop) external onlyOwner {
         emergencyStop = _emergencyStop;
-        emit EmergencyStopSet(_emergencyStop);
+        // emit EmergencyStopSet(_emergencyStop);
     }
 
     function withdrawFunds() external notEmergencyStopped {
