@@ -135,6 +135,7 @@ describe("DonationContract",  function () {
       await expect(donationContract.connect(beneficiary).withdrawFunds()).to.be.revertedWith("Beneficiary address not set");    
     })
     
+
     it("should allow the beneficiary to withdraw the funds", async function () {
         await donationContract.connect(donor1).donate("Thank you for your donation!", { value: ethers.parseEther("1") });
         await donationContract.connect(donor2).donate("Thank you for your donation!", { value: ethers.parseEther("2") });
@@ -157,6 +158,10 @@ describe("DonationContract",  function () {
       }
   
   )
+  it("should not allow withdrawal if there are no funds", async function () {
+    await expect(donationContract.connect(beneficiary).withdrawFunds()).to.be.revertedWith("No funds to withdraw");
+ })
+  
 
     });
   
