@@ -60,8 +60,8 @@ useEffect(() => {
 
             while ((events.length < donationCounter) && (cursor < BigInt(currentBlockNumber))) {
                 // console.log('events: ', events.length);
-                events.push(...await getBatch(cursor));
-                // events.push(...await getReverseBatch(reverseCursor));
+                // events.push(...await getBatch(cursor));
+                events.push(...await getReverseBatch(reverseCursor));
             }
 
             return events;

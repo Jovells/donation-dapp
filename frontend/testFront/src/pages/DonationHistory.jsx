@@ -59,15 +59,15 @@ useEffect(() => {
                   // console.log('end: ', end, 'contractBlockNumber: ', contractBlockNumber);
                   start = BigInt(contractBlockNumber);
               }
-              const newEvents = await donation.queryFilter(donation.filters.DonationReceived, parseInt(start), parseInt(end));
+              const newEvents = await donation.queryFilter(donation.filters.DonationReceived(), parseInt(start), parseInt(end));
               // console.log('newEvents: ', newEvents);
               return newEvents.reverse();
           }
 
             while ((events.length < donationCounter) && (cursor < BigInt(currentBlockNumber))) {
                 // console.log('events: ', events.length);
-                events.push(...await getBatch(cursor));
-                // events.push(...await getReverseBatch(reverseCursor));
+                // events.push(...await getBatch(cursor));
+                events.push(...await getReverseBatch(reverseCursor));
             }
 
             return events;
