@@ -1,7 +1,7 @@
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
 import { ethers } from "hardhat";
 import { expect } from "chai";
-import { DonationContract, DonationContract__factory } from "../typechain-types";
+import { DonationContract2, } from "../typechain-types";
 
 
 
@@ -11,7 +11,7 @@ describe("DonationContract",  function () {
 
   type Signer = PromiseType<ReturnType<typeof ethers.getSigner>>;
 
-  let donationContract : DonationContract, owner: Signer, donor1 : Signer, donor2: Signer, beneficiary1: Signer, beneficiary2: Signer;
+  let donationContract : DonationContract2, owner: Signer, donor1 : Signer, donor2: Signer, beneficiary1: Signer, beneficiary2: Signer;
 
   beforeEach(async function () {
     ({donationContract, owner, donor1, donor2, beneficiary1, beneficiary2} = await loadFixture(deployDonationFixture));
@@ -21,8 +21,8 @@ describe("DonationContract",  function () {
     // Contracts are deployed using the first /account by default
     const [owner, donor1, donor2, beneficiary1, beneficiary2] = await ethers.getSigners();
 
-    const Donation = await ethers.getContractFactory("DonationContract");
-    const donationContract : DonationContract = await Donation.deploy(beneficiary1.address);
+    const Donation = await ethers.getContractFactory("DonationContract2");
+    const donationContract : DonationContract2 = await Donation.deploy(beneficiary1.address);
 
     return {donationContract,  owner, donor1, donor2, beneficiary1, beneficiary2};
   }
@@ -64,16 +64,6 @@ describe("DonationContract",  function () {
       expect(beneficiary1DonationAmountAfter).to.equal(beneficiary1DonationAmountBefore + ethers.parseEther("1"));
     });
 
-    it("should emit a DonationReceived event when a user donates to the contract", async function () {
-
-        const donateTransaction = donationContract.connect(donor1).donate('message', { value: 50 });
-        const timestamp = (await (await donateTransaction).provider.getBlock('latest'))?.timestamp;
-
-        await expect(donateTransaction)
-          .to.emit(donationContract, "DonationReceived")
-          .withArgs(1, donor1.address, await donationContract.currentBeneficiary(), 50, 'message', timestamp );
-  
-    });
 
   });
 
@@ -89,6 +79,24 @@ describe("DonationContract",  function () {
       await expect(donationContract.connect(donor1).setBeneficiary(donor1.address)).to.be.revertedWith("Only the contract owner can call this function");
     });
   });
+
+  describe('getDonations', function () {
+    it('should return the donations', async function () {
+      await donationContract.connect(donor1).donate("first", { value: ethers.parseEther("1") });
+      await donationContract.connect(owner).setBeneficiary(beneficiary2.address);
+      await donationContract.connect(donor2).donate("second", { value: ethers.parseEther("2") });
+      const donations = await donationContract.getDonations();
+      console.log('ds', donations);
+      expect(donations.length).to.equal(2);
+      expect(donations[0].donor).to.equal(donor1.address);
+      expect(donations[0].amount).to.equal(ethers.parseEther("1"));
+      expect(donations[0].message).to.equal("first");
+      expect(donations[1].donor).to.equal(donor2.address);
+      expect(donations[1].amount).to.equal(ethers.parseEther("2"));
+      expect(donations[1].message).to.equal("second");
+    });
+  });
+
   describe("setEmergencyStop", function () {
     it("should allow the owner to set the emergency stop", async function () {
       await donationContract.connect(owner).setEmergencyStop(true);
