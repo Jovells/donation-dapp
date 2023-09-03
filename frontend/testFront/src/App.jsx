@@ -11,6 +11,7 @@ import ChangeBeneficiary from './pages/ChangeBeneficiary';
 import PauseOperations from './pages/PauseOperations';
 import { EthersContext } from './utils/EtherContext';
 import WithdrawFunds from './pages/WithdrawFunds';
+import WithdrawalHistory from './pages/WIthdrawalHistory';
 
 function App() {
   const [beneficiary, setBeneficiary] = useState("");
@@ -71,6 +72,9 @@ function App() {
       <hr />
       <h3>Withdraw Funds</h3>
       <WithdrawFunds />
+      <hr />
+      {/* <h3>WithdrawalHistory</h3> */}
+      {/* <WithdrawalHistory /> */}
       <br /><br /><br />
     </div>
   )
