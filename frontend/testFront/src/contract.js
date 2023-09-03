@@ -12,11 +12,11 @@ const settings = {
 const alchemy = new Alchemy(settings);
 
 
-const CONTRACT_ADDRESS = "0x0aDa7CfA69Add88C2BF2B2e15979A4d509Deaa1A";
-const p2 = new ethers.JsonRpcProvider("https://polygon-mumbai.g.alchemy.com/v2/fjfWrvNtk0DZ2dlAlWPk1I7FhdZemfrj");
-const provider = new ethers.WebSocketProvider("wss://polygon-mumbai.g.alchemy.com/v2/fjfWrvNtk0DZ2dlAlWPk1I7FhdZemfrj")
+const CONTRACT_ADDRESS = "0x4725F47b49E508856Afd6F0badDCb28d8f4427F6";
+// const p2 = new ethers.JsonRpcProvider("https://polygon-mumbai.g.alchemy.com/v2/fjfWrvNtk0DZ2dlAlWPk1I7FhdZemfrj");
+const provider = new ethers.providers.WebSocketProvider("wss://polygon-mumbai.g.alchemy.com/v2/fjfWrvNtk0DZ2dlAlWPk1I7FhdZemfrj")
 
 // new alchemy.ws.on(eventName, listener)
-export const donation = new ethers.Contract(CONTRACT_ADDRESS, ABI, p2 );
+export const donation = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider )
 
-provider.websocket.onopen(()=>console.log("connected"))
+// provider.websocket.onopen(()=>console.log("connected"))

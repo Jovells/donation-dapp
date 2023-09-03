@@ -25,10 +25,10 @@ contract DonationContract {
     // mapping(address => mapping(uint256 => Donation)) public donations;
 
 
-    event DonationReceived(uint256 indexed donationId, address indexed donor, uint256 amount, string message, uint256 timestamp);
+    event DonationReceived(uint256 indexed donationId, address indexed donor, address indexed beneficiary, uint256 amount, string message, uint256 timestamp);
     event BeneficiaryChanged(address indexed newBeneficiary);
     event EmergencyStopSet(bool indexed emergencyStop);
-    event FundsWithdrawn(address indexed beneficiary, uint256 amount);
+    event FundsWithdrawn(address indexed beneficiary, uint256 amount, uint256 timestamp);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only the contract owner can call this function");
@@ -64,7 +64,7 @@ contract DonationContract {
 
         // donors.push(msg.sender);
 
-        emit DonationReceived(++donationCounter, msg.sender, msg.value, _message, block.timestamp);
+        emit DonationReceived(++donationCounter, msg.sender, currentBeneficiary, msg.value, _message, block.timestamp);
     }
 
     // function viewDonorList() external view returns (address[] memory) {
@@ -97,7 +97,7 @@ contract DonationContract {
         payable(msg.sender).transfer(beneficiaries[msg.sender]);
         beneficiaries[msg.sender] = 0;
 
-        emit FundsWithdrawn(msg.sender, beneficiaries[msg.sender]);
+        emit FundsWithdrawn(msg.sender, beneficiaries[msg.sender], block.timestamp);
     }
 
     receive() external payable {

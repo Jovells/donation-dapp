@@ -1,11 +1,12 @@
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useMetaMask } from "metamask-react";
 import { ethers } from "ethers";
 import { donation } from "../contract";
+import { EthersContext } from "../utils/EtherContext";
 
 
 function Donate({ beneficiary }) {
-    const { ethereum } = useMetaMask();
+    const { donation, ethereum } = useContext(EthersContext)
     const [amount, setAmount] = useState("");
     const [message, setMessage] = useState("");
     const [donated, setDonated] = useState(false);
@@ -13,11 +14,9 @@ function Donate({ beneficiary }) {
     const donate = async () => {
         if (ethereum) {
             // Get Access to Signer
-            const provider = new ethers.BrowserProvider(ethereum);
-            const signer = await provider.getSigner();
             // Make Function Call
             console.log("Address: ", beneficiary);
-            await donation.connect(signer).donate(message, {value: ethers.parseUnits(amount, 'wei') }).catch((err) => alert(err.message));
+            await donation.donate(message, {value: ethers.utils.parseUnits(amount, 'wei') }).catch((err) => alert(err.message));
             setDonated('Thank you for your donation!');
 
         }

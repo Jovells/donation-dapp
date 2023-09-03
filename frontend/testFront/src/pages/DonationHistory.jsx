@@ -1,45 +1,35 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useContext } from 'react'
 import { useMetaMask } from "metamask-react";
 import { ethers } from "ethers";
-import { donation } from "../contract";
+// import { donation } from "../contract";
+import { EthersContext } from '../utils/EtherContext';
 
 export default function DonationHistory() {
 
-    const { ethereum } = useMetaMask();
     const [history, setHistory] = useState([]);
+    const {ethereum, donation, signer} = useContext(EthersContext);
+    const [loading, setLoading] = useState(false);
 
 
 useEffect(() => {
+  // console.log('ethereum: s', ethereum)
     async function getCurrentBeneficiary() {
-      if (ethereum) {
+      if (donation) {
+        loading || setLoading(true);
 
-        // console.log("Ethereum: ", ethereum)
-        // Get Access to Signer
-        const provider = new ethers.BrowserProvider(ethereum);
-        const signer = await provider.getSigner();
-        // console.log({signer, donation});
-        // Make Function Call
-        const myDonation = donation.connect(signer);
-        const donationCounter = await myDonation.donationCounter();
+        const donationCounter = await donation.donationCounter();
+        // console.log('donationCounter: ', donationCounter)
         //get block in which contract was deployed
-        const contractBlockNumber = await myDonation.deploymentblockNumber()
-        const currentBlockNumber = await provider.getBlockNumber();
+        const contractBlockNumber = await donation.deploymentblockNumber()
+        const currentBlockNumber = await donation.provider.getBlockNumber();
         // console.log('currentBlockNumber: ', currentBlockNumber);
         // console.log('contractBlockNumber: ', contractBlockNumber);
 
-        const filt = myDonation.filters.DonationReceived();
 
-        console.log(filt)
-
-        donation.on(filt, (donationId, donor, amount, message, timestamp) => {
-            console.log('donationId: ', donationId, 'donor: ', donor, 'amount: ', amount, 'message: ', message, 'timestamp: ', timestamp);
-            setHistory((history) => [...history, {donationId, donor, amount, message, timestamp}]);
-        })
-    
-        // myDonation.on("DonationReceived", (donationId, donor, amount, message, timestamp) => {
-        //     console.log('donationId: ', donationId, 'donor: ', donor, 'amount: ', amount, 'message: ', message, 'timestamp: ', timestamp);
-        //     setHistory((history) => [...history, {donationId, donor, amount, message, timestamp}]);
-        // })
+      // donation.on("DonationReceived", (donationId, donor, beneficiary, amount, message, timestamp) => {
+      //       console.log('DonationReceived: ', donationId, 'donor: ', donor, 'amount: ', amount, 'message: ', message, 'timestamp: ', timestamp);
+      //       setHistory((history) => [formatDonation(donationId, donor, beneficiary, amount, message, timestamp), ...history ]);
+      //   })
 
         //function to get events, 1000 blocks at a time, then recursively call itself until all events are retrieved
         async function getEvents() {
@@ -54,16 +44,30 @@ useEffect(() => {
                     // console.log('end: ', end, 'currentBlockNumber: ', currentBlockNumber);
                     end = BigInt(currentBlockNumber);
                 }
-                // console.log('start: ', start, 'end: ', end, 'difference', end - start);
-                const newEvents = await myDonation.queryFilter(myDonation.filters.DonationReceived, start, end);
+                const newEvents = await donation.queryFilter(donation.filters.DonationReceived(), parseInt(start), parseInt(end));
                 // console.log('newEvents: ', newEvents);
                 return newEvents;
             }
 
+            let reverseCursor = BigInt(currentBlockNumber);
+
+            async function getReverseBatch(end) {
+              let start = BigInt(end) - BigInt(999);
+          
+              reverseCursor = start - BigInt(1);
+              if (start < BigInt(contractBlockNumber)) {
+                  // console.log('end: ', end, 'contractBlockNumber: ', contractBlockNumber);
+                  start = BigInt(contractBlockNumber);
+              }
+              const newEvents = await donation.queryFilter(donation.filters.DonationReceived, parseInt(start), parseInt(end));
+              // console.log('newEvents: ', newEvents);
+              return newEvents.reverse();
+          }
 
             while ((events.length < donationCounter) && (cursor < BigInt(currentBlockNumber))) {
                 // console.log('events: ', events.length);
                 events.push(...await getBatch(cursor));
+                // events.push(...await getReverseBatch(reverseCursor));
             }
 
             return events;
@@ -73,19 +77,14 @@ useEffect(() => {
         const allEvents = await getEvents();
 
    const history = allEvents.map((event) => {
-          const eventLog = donation.interface.parseLog(event);
-          const [donationId, donor, amount, message, timestamp] = event.args
-        //   console.log('eventLog: ', donationId, donor, amount, message, timestamp);
-            return {donationId: String(donationId), 
-                donor, 
-                amount :ethers.formatEther(amount), 
-                message, 
-                timestamp: new Date(parseInt(timestamp) * 1000).toUTCString()}
+          // const eventLog = donation.interface.parseLog(event);
+          const [donationId, donor, beneficiary, amount, message, timestamp] = event.args
+          // console.log('eventLog: ', 'did', donationId, 'donor', donor, 'amount', amount, 'messsage', message, 'ts', timestamp);
+            return formatDonation(donationId, donor, beneficiary, amount, message, timestamp)
         });
 
-    
-       
         setHistory(history);
+        setLoading(false);
       }
     }
 
@@ -94,19 +93,39 @@ useEffect(() => {
     
     return () => {
     }
-  }, [ethereum])
+  }, [ethereum, donation, signer])
+
+
   
   return(
-    <>
-    {history.map((donation) => 
-            <div key={donation.donationId}>
+    <div >
+    { loading ? 'Loading History...' : history.map((donation) =>{
+
+
+           return <div key={donation.donationId}>
+              {/* {console.log('donation: ', donation)} */}
             <div>Donation ID: {donation.donationId}</div>
             <div>Donor: {donation.donor}</div>
+            <div>Beneficiary: {donation.beneficiary}</div>
             <div>Amount: {donation.amount}</div>
             <div>Message: {donation.message}</div>
             <div>Timestamp: {donation.timestamp}</div>
+            <hr/>
             </div>
+    } 
         
     )}
-    </>
+    </div>
   )}
+
+function formatDonation(donationId, donor, beneficiary, amount, message, timestamp) {
+  // console.log('format','donationId: ', donationId, 'donor: ', donor, 'beneficiary: ', beneficiary, 'amount: ', amount, 'message: ', message, 'timestamp: ', timestamp);
+  return {
+    donationId: String(donationId),
+    donor,
+    beneficiary,
+    amount: ethers.utils.formatEther(amount || 0),
+    message,
+    timestamp: new Date(parseInt(timestamp) * 1000).toUTCString()
+  };
+}
