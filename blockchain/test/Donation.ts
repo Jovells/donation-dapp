@@ -75,7 +75,7 @@ describe("DonationContract",  function () {
         // Transfer 50 tokens from owner to addr1
         await expect(donateTransaction)
           .to.emit(donationContract, "DonationReceived")
-          .withArgs(1, donor1.address, 50, 'message', timestamp );
+          .withArgs(1, donor1.address, await donationContract.currentBeneficiary(), 50, 'message', timestamp );
   
         // Transfer 50 tokens from addr1 to addr2
         // We use .connect(signer) to send a transaction from another account
@@ -152,17 +152,6 @@ describe("DonationContract",  function () {
 
         const withdrawal1 = await donationContract.connect(beneficiary1).withdrawFunds();
         const withdrawal2 = await donationContract.connect(beneficiary2).withdrawFunds();
-
-        let contract = donationContract;
-        let events = await contract.queryFilter(donationContract.filters.DonationReceived);
-        let event = events[0];
-
-        for (let i = 0; i < events.length; i++) {
-          const event = events[i];
-          // console.log('event: ', event);
-          const eventLog = contract.interface.parseLog(event);
-          console.log('eventLog: ', eventLog);
-        }
 
         // const txnReceipt = await event.getTransactionReceipt();
         // let eventLog = txnReceipt.logs.forEach(log=> console.log('log: ', contract.interface.parseLog(log))) // could be any index
