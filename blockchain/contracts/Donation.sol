@@ -3,24 +3,32 @@ pragma solidity ^0.8.9;
 
 contract DonationContract {
     address public owner;
-    address public beneficiary;
+    address public currentBeneficiary;
     bool public emergencyStop;
-    address[] public donors;
-    uint256 public totalDonations;
+    // address[] public donors;
     uint256 public donationCounter;
+    uint256 public deploymentblockNumber;
+    mapping(address => uint) public beneficiaries;
 
-    struct Donation {
-        uint256 amount;
-        string message;
-        uint256 timestamp;
-    }
+    // struct Donation {
+    //     uint256 amount;
+    //     string message;
+    //     uint256 timestamp;
+    // }
 
-    mapping(address => mapping(uint256 => Donation)) public donations;
+    // struct Beneficiary {
+    //     uint256 amountReceived;
+    //     // mapping(address => mapping(uint256 => Donation)) donations;
+
+    // }
+
+    // mapping(address => mapping(uint256 => Donation)) public donations;
 
 
     event DonationReceived(uint256 indexed donationId, address indexed donor, uint256 amount, string message, uint256 timestamp);
-    // event BeneficiaryChanged(address indexed newBeneficiary);
-    // event EmergencyStopSet(bool indexed emergencyStop);
+    event BeneficiaryChanged(address indexed newBeneficiary);
+    event EmergencyStopSet(bool indexed emergencyStop);
+    event FundsWithdrawn(address indexed beneficiary, uint256 amount);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only the contract owner can call this function");
@@ -34,24 +42,29 @@ contract DonationContract {
 
     constructor(address _initialBeneficiary) {
         owner = msg.sender;
-        beneficiary = _initialBeneficiary;
+        currentBeneficiary = _initialBeneficiary;
         emergencyStop = false;
+        deploymentblockNumber = block.number;
+    }
+
+    function getAmountReceived(address _beneficiary) external view returns (uint256) {
+      return beneficiaries[_beneficiary];
     }
 
     function donate(string memory _message) public payable notEmergencyStopped {
         require(msg.value > 0, "Donation amount must be greater than 0");
         
-        uint256 currentDonationId = ++donationCounter;
-        donations[msg.sender][currentDonationId] = Donation({
-            amount: msg.value,
-            message: _message,
-            timestamp: block.timestamp
-        });
+        
+        // beneficiaries[currentBeneficiary].donations[msg.sender][currentDonationId] = Donation({
+        //     amount: msg.value,
+        //     message: _message,
+        //     timestamp: block.timestamp
+        // });
+        beneficiaries[currentBeneficiary] += msg.value;
 
-        totalDonations += msg.value;
-        donors.push(msg.sender);
+        // donors.push(msg.sender);
 
-        emit DonationReceived(currentDonationId, msg.sender, msg.value, _message, block.timestamp);
+        emit DonationReceived(++donationCounter, msg.sender, msg.value, _message, block.timestamp);
     }
 
     // function viewDonorList() external view returns (address[] memory) {
@@ -66,22 +79,25 @@ contract DonationContract {
     // }
 
     function setBeneficiary(address _newBeneficiary) external onlyOwner {
-        beneficiary = _newBeneficiary;
-        // emit BeneficiaryChanged(_newBeneficiary);
+        currentBeneficiary = _newBeneficiary;
+        emit BeneficiaryChanged(_newBeneficiary);
     }
 
     function setEmergencyStop(bool _emergencyStop) external onlyOwner {
         emergencyStop = _emergencyStop;
-        // emit EmergencyStopSet(_emergencyStop);
+        emit EmergencyStopSet(_emergencyStop);
     }
 
     function withdrawFunds() external notEmergencyStopped {
-        require(beneficiary != address(0), "Beneficiary address not set");
-        require(beneficiary == msg.sender, "Only the beneficiary can withdraw funds");
-        require(totalDonations > 0, "No funds to withdraw");
+        // require(currentBeneficiary != address(0), "Beneficiary address not set");
+        // require(currentBeneficiary == msg.sender, "Only the beneficiary can withdraw funds");
+        require(beneficiaries[msg.sender] > 0, "No funds to withdraw or not a beneficiary");
 
-        totalDonations = 0;
-        payable(beneficiary).transfer(address(this).balance);
+
+        payable(msg.sender).transfer(beneficiaries[msg.sender]);
+        beneficiaries[msg.sender] = 0;
+
+        emit FundsWithdrawn(msg.sender, beneficiaries[msg.sender]);
     }
 
     receive() external payable {
