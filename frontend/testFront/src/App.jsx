@@ -1,22 +1,18 @@
 import { useContext, useEffect, useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
 import './App.css'
 import { useMetaMask } from "metamask-react";
 import Donate from './pages/Donate';
 import { ethers } from "ethers";
-import { donation } from "./contract";
 import DonationHistory from './pages/DonationHistory';
 import ChangeBeneficiary from './pages/ChangeBeneficiary';
 import PauseOperations from './pages/PauseOperations';
 import { EthersContext } from './utils/EtherContext';
 import WithdrawFunds from './pages/WithdrawFunds';
-import WithdrawalHistory from './pages/WIthdrawalHistory';
 
 function App() {
   const [beneficiary, setBeneficiary] = useState("");
   const [totalDonations, setTotalDonations] = useState(0);
-  const { provider, donation, status, connect, account, chainId, ethereum } = useContext(EthersContext)
+  const { donation, status, connect, account, chainId, ethereum } = useContext(EthersContext)
 
   const { switchChain } = useMetaMask();
 
