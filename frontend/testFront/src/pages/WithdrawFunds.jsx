@@ -13,8 +13,9 @@ function WithdrawFunds({ beneficiary }) {
             // Get Access to Signer
             // Make Function Call
             console.log("Address: ", beneficiary);
-            await donation.withdrawFunds().catch((err) => alert(err.message));
-            setFundsWithdrawn(!fundsWithdrawn);
+            donation.withdrawFunds().then(() => setFundsWithdrawn(!fundsWithdrawn))
+            .catch((err) => alert(err.message));
+            
 
         }
     }
