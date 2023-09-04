@@ -57,7 +57,7 @@ contract DonationContract {
         payable(msg.sender).transfer(beneficiaries[msg.sender]);
         emit FundsWithdrawn(msg.sender, beneficiaries[msg.sender], block.timestamp);
         
-        beneficiaries[msg.sender] = 0;
+        delete beneficiaries[msg.sender];
     }
 
     receive() external payable {

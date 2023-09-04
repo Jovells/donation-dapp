@@ -86,7 +86,7 @@ describe("DonationContract",  function () {
       await donationContract.connect(owner).setBeneficiary(beneficiary2.address);
       await donationContract.connect(donor2).donate("second", { value: ethers.parseEther("2") });
       const donations = await donationContract.getDonations();
-      console.log('ds', donations);
+
       expect(donations.length).to.equal(2);
       expect(donations[0].donor).to.equal(donor1.address);
       expect(donations[0].amount).to.equal(ethers.parseEther("1"));
