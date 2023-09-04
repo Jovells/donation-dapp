@@ -18,7 +18,6 @@ function EthersProvider({ children }) {
             if (ethereum) {
                 const provider = new ethers.providers.Web3Provider(ethereum);
                 const newSigner = provider.getSigner();
-                console.log('sn', newSigner)
                 setConnectedContract(donation.connect(newSigner));
                 setProvider(provider);
                 setSigner(signer);

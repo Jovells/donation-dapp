@@ -26,10 +26,15 @@ function App() {
         // console.log({signer, donation});
         // Make Function Call
         try {
-          const donationsAmount = await donation.getAmountReceived();
-          setTotalDonations(donationsAmount);
           const currentBeneficiary = await donation.currentBeneficiary()
           setBeneficiary(currentBeneficiary);
+          const donationsAmount = await donation.getAmountReceived(currentBeneficiary);
+          setTotalDonations(ethers.utils.formatEther(donationsAmount));
+          donation.on("FundsWithdrawn", (toBenefitiary, amount, timestamp) => {
+            console.log('FundsWithdrawn: ', toBenefitiary, 'amount: ', ethers.utils.formatEther(amount), 'timestamp: ', timestamp);
+           (toBenefitiary === beneficiary) && donation.getAmountReceived(beneficiary).then((donationsAmount) => {
+            setTotalDonations(ethers.utils.formatEther(donationsAmount));})
+          })
         } catch (error) {
           console.log(error)
         }
@@ -55,14 +60,14 @@ function App() {
     <div>
       <div>Connected account {account} on chain ID {chainId}</div>
       <div>Current Beneficiary: {beneficiary}</div>
-      <div>Total Donations: {ethers.utils.formatEther(totalDonations)}</div>
+      <div>Total Donations: {totalDonations} MATIC</div>
       {/* Import Add EC Page */}
       <hr />
       <h3>Donate</h3>
       <Donate beneficiary={beneficiary} />
       <hr />
       <h3>Donation History</h3>
-      <DonationHistory />
+      <DonationHistory setTotalDonations={setTotalDonations} />
       <hr />
       <h3>Change Beneficiary</h3>
       <ChangeBeneficiary />

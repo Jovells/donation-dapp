@@ -16,8 +16,10 @@ function Donate({ beneficiary }) {
             // Get Access to Signer
             // Make Function Call
             console.log("Address: ", beneficiary);
-            await donation.donate(message, {value: ethers.utils.parseUnits(amount, 'wei') }).catch((err) => alert(err.message));
-            setDonated('Thank you for your donation!');
+            donation.donate(message, {value: ethers.utils.parseEther(amount) }).then(()=>{
+                setDonated('Thank you for your donation!');
+            })
+            .catch((err) => alert(err.message));
 
         }
     }
@@ -25,7 +27,7 @@ function Donate({ beneficiary }) {
     return (
         <div>
             {donated && <div>{donated}</div>}
-            <input type="text" placeholder="Amount" onChange={(e) => setAmount(e.target.value)} />
+            <input type="text" placeholder="Amount in Matic" onChange={(e) => setAmount(e.target.value)} />
             <input type="text" placeholder="Message" onChange={(e) => setMessage(e.target.value)} />
             <button onClick={donate}>Donate</button>
         </div>
