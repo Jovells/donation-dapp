@@ -96,7 +96,7 @@ useEffect(() => {
     return () => {
       donationContract?.removeAllListeners('DonationReceived');
     }
-  }, [ethereum, donation, signer])
+  }, [donation])
 
 
   

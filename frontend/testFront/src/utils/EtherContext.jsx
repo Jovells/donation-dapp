@@ -16,8 +16,9 @@ function EthersProvider({ children }) {
     useEffect(() => {
         async function init() {
             if (ethereum) {
-                const provider = new ethers.BrowserProvider(ethereum);
-                const newSigner = await provider.getSigner();
+                const provider = new ethers.BrowserProvider(ethereum)
+                const newSigner = (await provider.getSigner())
+
                 setConnectedContract(donationContract.connect(newSigner));
                 setProvider(provider);
                 // setSigner(s);
