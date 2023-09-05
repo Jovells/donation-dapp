@@ -1,2 +1,6 @@
 #mui front
 donation.ignore/
+
+# 
+.env
+abidecide.js
