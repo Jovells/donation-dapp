@@ -9,3 +9,4 @@ const provider = new ethers.WebSocketProvider(`wss://polygon-mumbai.g.alchemy.co
 // const contract = new ethers.Contract(ADDRESS, ABI, provider);
 export const donationContract = new ethers.Contract(CONTRACT_ADDRESS, ABI, provider );
 // donationContract.on('EmergencyStopSet', ()=> console.log('EmergencyStopSet on contract.js'));
+// donationContract.on('BeneficiaryChanged', ()=> console.log('BeneficiaryChanged on contract.js'));
