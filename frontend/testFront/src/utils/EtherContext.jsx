@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { ethers } from "ethers";
 import { useMetaMask } from "metamask-react";
-import { donation } from "../contract";
+import { donationContract } from "../contract";
 
 const EthersContext = createContext();
 
@@ -16,11 +16,11 @@ function EthersProvider({ children }) {
     useEffect(() => {
         async function init() {
             if (ethereum) {
-                const provider = new ethers.providers.Web3Provider(ethereum);
-                const newSigner = provider.getSigner();
-                setConnectedContract(donation.connect(newSigner));
+                const provider = new ethers.BrowserProvider(ethereum);
+                const newSigner = await provider.getSigner();
+                setConnectedContract(donationContract.connect(newSigner));
                 setProvider(provider);
-                setSigner(signer);
+                // setSigner(s);
             }
         }
         init();
