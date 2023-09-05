@@ -8,6 +8,7 @@ import ChangeBeneficiary from './pages/ChangeBeneficiary';
 import PauseOperations from './pages/PauseOperations';
 import { EthersContext } from './utils/EtherContext';
 import WithdrawFunds from './pages/WithdrawFunds';
+import { donationContract } from './contract';
 
 function App() {
   const [beneficiary, setBeneficiary] = useState("");
@@ -15,6 +16,34 @@ function App() {
   const { donation, status, connect, account, chainId, ethereum } = useContext(EthersContext)
 
   const { switchChain } = useMetaMask();
+
+  useEffect(() => {
+    donationContract.on("FundsWithdrawn", (toBeneficiary, amount, timestamp) => {
+      console.log('FundsWithdrawn: ', toBeneficiary, 'amount: ', ethers.utils.formatEther(amount), 'timestamp: ', timestamp);
+      (toBeneficiary === beneficiary) && donation.getAmountReceived(beneficiary).then((donationsAmount) => {
+        setTotalDonations(ethers.formatEther(donationsAmount));
+      })
+    })
+    donationContract.on("BeneficiaryChanged", (newBeneficiary) => {
+      console.log('newBeneficiary: ', newBeneficiary);
+      console.log(newBeneficiary !== beneficiary);
+      setBeneficiary(oldBeneficiary => {
+        if (newBeneficiary !== oldBeneficiary) {
+          donation.getAmountReceived(newBeneficiary).then((donationsAmount) => {
+              setTotalDonations(ethers.formatEther(donationsAmount));
+            })
+          return newBeneficiary;
+        }
+        return oldBeneficiary;
+      });
+    })
+
+    return () => { 
+      donationContract?.removeAllListeners("FundsWithdrawn");
+      donationContract?.removeAllListeners("BeneficiaryChanged");
+    }
+
+  }, [donationContract])
 
 
   useEffect(() => {
@@ -28,13 +57,9 @@ function App() {
           const currentBeneficiary = await donation.currentBeneficiary()
           setBeneficiary(currentBeneficiary);
           const donationsAmount = await donation.getAmountReceived(currentBeneficiary);
-          setTotalDonations(ethers.utils.formatEther(donationsAmount));
-          donation.on("FundsWithdrawn", (toBenefitiary, amount, timestamp) => {
-            console.log('FundsWithdrawn: ', toBenefitiary, 'amount: ', ethers.utils.formatEther(amount), 'timestamp: ', timestamp);
-            (toBenefitiary === beneficiary) && donation.getAmountReceived(beneficiary).then((donationsAmount) => {
-              setTotalDonations(ethers.utils.formatEther(donationsAmount));
-            })
-          })
+          setTotalDonations(ethers.formatEther(donationsAmount));
+
+
         } catch (error) {
           console.log(error)
         }
@@ -44,6 +69,7 @@ function App() {
     getCurrentBeneficiary();
 
     return () => {
+      donationContract?.removeAllListeners();
     }
   }, [ethereum, donation, beneficiary])
 
