@@ -2,6 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import { useMetaMask } from "metamask-react";
 import { ethers } from "ethers";
 import { EthersContext } from "../utils/EtherContext";
+import { donationContract } from "../contract";
 
 
 function PauseOperations({ beneficiary }) {
@@ -10,15 +11,15 @@ function PauseOperations({ beneficiary }) {
 
     useEffect(() => {
         if(donation) {
-      donation.emergencyStop().then((emergencyStop) => setOperationsPaused(emergencyStop));
-      donation.on("EmergencyStopSet", (emergencyStop) => {
+      donationContract.emergencyStop().then((emergencyStop) => setOperationsPaused(emergencyStop));
+      donationContract.on("EmergencyStopSet", (emergencyStop) => {
         console.log("Emergency Stop Set: ", emergencyStop);
         setOperationsPaused(emergencyStop)
     })
 
 }
       return () => {
-        donation?.removeAllListeners("EmergencyStopSet");
+        donationContract?.removeAllListeners("EmergencyStopSet");
       }
     }, [ethereum, donation])
     

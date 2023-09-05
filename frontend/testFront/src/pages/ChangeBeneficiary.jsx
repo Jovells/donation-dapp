@@ -1,12 +1,11 @@
 import { useContext, useEffect, useState } from "react";
 import { useMetaMask } from "metamask-react";
 import { ethers } from "ethers";
-import { donation } from "../contract";
 import { EthersContext } from "../utils/EtherContext";
 
 
 function ChangeBeneficiary({ beneficiary }) {
-    const { ethereum, provider } = useContext(EthersContext)
+    const { ethereum, provider, donation } = useContext(EthersContext)
     const [newBeneficiary, setNewBeneficiary] = useState("");
     const [beneficiaryChanged, setBeneficiaryChanged] = useState(false);
 

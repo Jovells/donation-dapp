@@ -1,13 +1,13 @@
 import { useEffect, useState, useContext } from 'react'
 import { useMetaMask } from "metamask-react";
 import { ethers } from "ethers";
-// import { donation } from "../contract";
+import { donationContract } from "../contract";
 import { EthersContext } from '../utils/EtherContext';
 
 export default function DonationHistory({setTotalDonations}) {
 
     const [history, setHistory] = useState([]);
-    const {ethereum, donation, signer} = useContext(EthersContext);
+    const {ethereum, donation, signer, provider} = useContext(EthersContext);
     const [loading, setLoading] = useState(false);
 
 
@@ -21,16 +21,16 @@ useEffect(() => {
         // console.log('donationCounter: ', donationCounter)
         //get block in which contract was deployed
         const contractBlockNumber = await donation.deploymentblockNumber()
-        const currentBlockNumber = await donation.provider.getBlockNumber();
+        const currentBlockNumber = await provider.getBlockNumber();
         // console.log('currentBlockNumber: ', currentBlockNumber);
         // console.log('contractBlockNumber: ', contractBlockNumber);
 
 
-      donation.on("DonationReceived", (donationId, donor, beneficiary, amount, message, timestamp) => {
+        donationContract.on("DonationReceived", (donationId, donor, beneficiary, amount, message, timestamp) => {
             console.log('DonationReceived: ', donationId, 'donor: ', donor, 'amount: ', amount, 'message: ', message, 'timestamp: ', timestamp);
             setHistory((history) => [formatDonation(donationId, donor, beneficiary, amount, message, timestamp), ...history ]);
             donation.getAmountReceived(beneficiary).then((donationsAmount) => {
-              setTotalDonations(ethers.utils.formatEther(donationsAmount));
+              setTotalDonations(ethers.formatEther(donationsAmount));
             })
         })
 
@@ -94,7 +94,7 @@ useEffect(() => {
 
     
     return () => {
-      donation?.removeAllListeners('DonationReceived');
+      donationContract?.removeAllListeners('DonationReceived');
     }
   }, [ethereum, donation, signer])
 
@@ -127,7 +127,7 @@ function formatDonation(donationId, donor, beneficiary, amount, message, timesta
     donationId: String(donationId),
     donor,
     beneficiary,
-    amount: ethers.utils.formatEther(amount || 0) + ' MATIC',
+    amount: ethers.formatEther(amount || 0) + ' MATIC',
     message,
     timestamp: new Date(parseInt(timestamp) * 1000).toUTCString()
   };
